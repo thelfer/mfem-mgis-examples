@@ -45,7 +45,7 @@ Strain Gradient matrix : val = 0.012
 [ 0         , - val / 2 ,   0 ] 
 [ 0         ,          0, val ]
 
-Solver : HyprePCG
+Solver : HypreGMRES
 Preconditionner : HypreBoomerAMG
 
 Behavior law parameters : ImplicitNortonThreshold
@@ -263,8 +263,8 @@ static void setLinearSolver(Problem& p,
   auto options = mfem_mgis::Parameters{{"VerbosityLevel", verbosity}};
   auto preconditionner = mfem_mgis::Parameters{{"Name","HypreBoomerAMG"}, {"Options",options}};
   solverParameters.insert(mfem_mgis::Parameters{{"Preconditioner",preconditionner}});
-  // solver HyprePCG
-  p.setLinearSolver("HyprePCG", solverParameters);
+  // solver HypreGMRES
+  p.setLinearSolver("HypreGMRES", solverParameters);
 }
 
   template<typename Problem>
