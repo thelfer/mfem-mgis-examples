@@ -161,7 +161,8 @@ void run_solve(Problem& p, double start, double end)
 	// check status
 	if (statistics.status) {
 		mfem_mgis::Profiler::Utils::Message("INFO: FAILED");
-	}
+    std::exit(EXIT_FAILURE);
+  }
 }
 
 int main(int argc, char* argv[]) 
