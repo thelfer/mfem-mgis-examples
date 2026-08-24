@@ -31,7 +31,7 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
 # Define the executable to build for this example
 add_executable(UniaxialTensileTestEx UniaxialTensileTest.cxx)
-target_link_libraries(UniaxialTensileTestEx mfem-mgis::MFEMMGIS tbb::tbb)
+target_link_libraries(UniaxialTensileTestEx mfem-mgis::MFEMMGIS TBB::tbb)
 target_include_directories(UniaxialTensileTestEx
     SYSTEM
     PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
