@@ -5,6 +5,8 @@ project(UnilateralTensileTestExample)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+find_package(TBB REQUIRED)
+
 include(CTest)
 # testing
 set(CTEST_CONFIGURATION_TYPE "${JOB_BUILD_CONFIGURATION}")
@@ -29,7 +31,7 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
 # Define the executable to build for this example
 add_executable(UniaxialTensileTestEx UniaxialTensileTest.cxx)
-target_link_libraries(UniaxialTensileTestEx mfem-mgis::MFEMMGIS)
+target_link_libraries(UniaxialTensileTestEx mfem-mgis::MFEMMGIS tbb::tbb)
 target_include_directories(UniaxialTensileTestEx
     SYSTEM
     PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
