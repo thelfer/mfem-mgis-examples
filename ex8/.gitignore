@@ -1,0 +1,5 @@
+build
+*.msh
+*.csv
+*.res
+*.png

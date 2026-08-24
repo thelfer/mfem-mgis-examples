@@ -13,6 +13,7 @@
 #include "MFEMMGIS/NonLinearEvolutionProblem.hxx"
 
 int main(int argc, char** argv) {
+  auto ctx = mgis::Context{};
   constexpr const auto dim = mfem_mgis::size_type{2};
   // Initialize mfem_mgis (it includes a call to MPI_Init)
   mfem_mgis::initialize(argc, argv);
@@ -40,7 +41,7 @@ int main(int argc, char** argv) {
   }
   args.PrintOptions(std::cout);
   // the non linear problem
-  mfem_mgis::NonLinearEvolutionProblem problem({{"MeshFileName", mesh_file},
+  mfem_mgis::NonLinearEvolutionProblem problem(ctx, {{"MeshFileName", mesh_file},
                                                 {"FiniteElementFamily", "H1"},
                                                 {"FiniteElementOrder", order},
                                                 {"UnknownsSize", dim},
@@ -123,7 +124,7 @@ int main(int argc, char** argv) {
         }
       }
     }
-    problem.executePostProcessings(t, dt);
+    problem.executePostProcessings(ctx, t, dt);
     t += dt;
     ++iteration;
     std::cout << '\n';

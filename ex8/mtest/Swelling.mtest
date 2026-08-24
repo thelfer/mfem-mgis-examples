@@ -1,0 +1,56 @@
+@Author RIGAL Julien;
+@Description {"Gonflement sous puissance constante - Pow=1e10 W/m3"};
+
+@Behaviour<generic> '../build/src/libU3SI2-generic.so' 'U3SI2_SolidSwelling';
+
+@ExternalStateVariable 'Temperature' 293.15;
+// Puissance volumique constante
+@ExternalStateVariable 'PowerDensity' {
+  0.0   : 0.0,
+  1.0e4 : 1.0e9,
+  9.0e4 : 9.0e9,
+  1.0e5 : 1.0e10,
+  4.0e6 : 1.0e10
+};
+
+@Times {
+  0.0,
+  1.0e5,
+  2.0e5,
+  3.0e5,
+  4.0e5,
+  5.0e5,
+  6.0e5,
+  7.0e5,
+  8.0e5,
+  9.0e5,
+  1.0e6,
+  1.1e6,
+  1.2e6,
+  1.3e6,
+  1.4e6,
+  1.5e6,
+  1.6e6,
+  1.7e6,
+  1.8e6,
+  1.9e6,
+  2.0e6,
+  3.0e6,
+  4.0e6
+};
+
+
+// Expected behavior:
+// - PowerDensity increases linearly from 0 to 1e10 W/m3 during the first 100,000 seconds, then remains constant.
+// - SolidSwelling follows a quadratic evolution initially (integral of the ramp), then grows linearly over time.
+//
+// Governing equation:
+//   dS = 6.2e-29 * Pow / (fe * 1.60218e-13) * dt
+//
+// Total integrated energy at t = 2e6 s:
+//   E = (0.5 * 1e5 * 1e10) [ramp] + (1.9e6 * 1e10) [plateau] = 1.95e16 J/m3
+//
+// Expected value at t = 2e6 s:
+//   S ~ 0.0377 
+// 
+// Therefore, the swelling should progress from ~0% initially to ~3.77% at the end of the simulation.

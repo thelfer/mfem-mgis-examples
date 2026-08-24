@@ -65,7 +65,7 @@ Order 2
 
 // We need this class for test case sources
 struct TestParameters {
-  const char* mesh_file = "inclusion.msh";
+  const char* mesh_file = "mesh/inclusion.msh";
   const char* behaviour = "ImplicitNortonThreshold";
   const char* library = "src/libBehaviour.so";
   const char* petscsrc_file = "petscsrc";
@@ -114,12 +114,11 @@ void common_parameters(mfem::OptionsParser& args, TestParameters& p)
 }
 
   template<typename Implementation>
-void print_mesh_information(Implementation& impl)
+void print_mesh_information(mgis::Context& ctx, Implementation& impl)
 {
 
   using mfem_mgis::Profiler::Utils::sum;
-  using mfem_mgis::Profiler::Utils::Message;
-  Message("INFO: print_mesh_information");
+  mfem::out << "INFO: print_mesh_information\n";
 
   //getMesh
   auto mesh = impl.getFiniteElementSpace().GetMesh();
@@ -140,10 +139,10 @@ void print_mesh_information(Implementation& impl)
   int64_t unknowns_local = fespace.GetTrueVSize();
   int64_t unknowns = sum(unknowns_local);
 
-  Message("INFO: number of vertices -> ", numbers_of_vertices);
-  Message("INFO: number of elements -> ", numbers_of_elements);
-  Message("INFO: element size -> ", h);
-  Message("INFO: Number of finite element unknowns: " , unknowns);
+  mfem::out << "INFO: number of vertices -> " << numbers_of_vertices << '\n'
+            << "INFO: number of elements -> " << numbers_of_elements << '\n'
+            << "INFO: element size -> " << h << '\n'
+            << "INFO: Number of finite element unknowns: " << unknowns << '\n';
 }
 
 long get_memory_checkpoint()
@@ -158,11 +157,11 @@ long get_memory_checkpoint()
   return res;
 };
 
-void print_memory_footprint(std::string msg)
+void print_memory_footprint(mgis::Context& ctx, std::string msg)
 {
   long mem = get_memory_checkpoint();
   double m = double(mem) * 1e-6; // conversion kb to Gb
-  mfem_mgis::Profiler::Utils::Message(msg, " memory footprint: ", m, " GB");
+  mfem::out << msg << " memory footprint: " << m << " GB\n";
 }
 
 
@@ -179,18 +178,18 @@ void add_post_processings(Problem& p, std::string msg)
 } // end timer add_postprocessing_and_outputs
 
   template<typename Problem>
-void execute_post_processings(Problem& p, double start, double end)
+void execute_post_processings(mgis::Context& ctx, Problem& p, double start, double end)
 {
-  CatchTimeSection("common::post_processing_step");
-  p.executePostProcessings(start, end);
+  CatchTimeSection(ctx, "common::post_processing_step");
+  p.executePostProcessings(ctx, start, end);
 }
 
-void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolutionProblem& problem)
+void setup_properties(mgis::Context& ctx, const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolutionProblem& problem)
 {
   using namespace mgis::behaviour;
   using real=mfem_mgis::real;
 
-  CatchTimeSection("set_mgis_stuff");
+  CatchTimeSection(ctx, "set_mgis_stuff");
   problem.addBehaviourIntegrator("Mechanics", 1, p.library, p.behaviour);
   problem.addBehaviourIntegrator("Mechanics", 2, p.library, p.behaviour);
   // materials
@@ -242,12 +241,12 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 
 
   template<typename Problem>    
-static void setLinearSolver(Problem& p,
+static void setLinearSolver(mgis::Context& ctx, Problem& p,
     const int verbosity = 0,
     const mfem_mgis::real Tol = 1e-12
     )
 {
-  CatchTimeSection("set_linear_solver");
+  CatchTimeSection(ctx, "set_linear_solver");
   // pilote
   constexpr int defaultMaxNumOfIt     = 5000;     // MaximumNumberOfIterations
   constexpr int adjustMaxNumOfIt     = 500000;     // MaximumNumberOfIterations
@@ -268,25 +267,25 @@ static void setLinearSolver(Problem& p,
 }
 
   template<typename Problem>
-void run_solve(Problem& p, double start, double dt)
+void run_solve(mgis::Context& ctx, Problem& p, double start, double dt)
 {
-  CatchTimeSection("Solve");
+  CatchTimeSection(ctx, "Solve");
   // solving the problem
   auto statistics = p.solve(start, dt);
   // check status
   if (!statistics.status) {
-    mfem_mgis::Profiler::Utils::Message("INFO: FAILED");
+    mfem::out() << "INFO: FAILED\n";
     std::exit(EXIT_FAILURE);
   }
 }
 
 int main(int argc, char* argv[]) 
 {
+  auto ctx = mgis::Context{};
+  ctx.enableProfiling(true);
+
   // mpi initialization here 
   mfem_mgis::initialize(argc, argv);
-
-  // init timers
-  mfem_mgis::Profiler::timers::init_timers();
 
   // get parameters
   TestParameters p;
@@ -300,7 +299,7 @@ int main(int argc, char* argv[])
   constexpr const auto dim = mfem_mgis::size_type{3};
 
   // creating the finite element workspace
-  auto fed = std::make_shared<mfem_mgis::FiniteElementDiscretization>(
+  auto fed = std::make_shared<mfem_mgis::FiniteElementDiscretization>(ctx,
       mfem_mgis::Parameters{{"MeshFileName", p.mesh_file},
       {"FiniteElementFamily", "H1"},
       {"FiniteElementOrder", p.order},
@@ -309,16 +308,16 @@ int main(int argc, char* argv[])
       {"UnknownsSize", dim},
       {"NumberOfUniformRefinements", p.parallel ? p.refinement : 0},
       {"Parallel", p.parallel}});
-  mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed);
-  print_mesh_information(problem.getImplementation<true>());
-  print_memory_footprint("After_problem:");
+  mfem_mgis::PeriodicNonLinearEvolutionProblem problem(ctx, fed);
+  print_mesh_information(ctx, problem.getImplementation<true>());
+  print_memory_footprint(ctx, "After_problem:");
 
   // set problem
-  setup_properties(p, problem);
+  setup_properties(ctx, p, problem);
 
   if( !mfem_mgis::usePETSc())
   {
-    setLinearSolver(problem, p.verbosity_level);
+    setLinearSolver(ctx, problem, p.verbosity_level);
   }
 
   problem.setSolverParameters({{"VerbosityLevel", 1},
@@ -337,14 +336,14 @@ int main(int argc, char* argv[])
   for(int i = 0 ; i < nStep ; i++)
   {
 
-    mfem_mgis::Profiler::Utils::Message("Solving: from ", i*dt, " to ", (i+1)*dt);
-    run_solve(problem, i * dt, dt);
-    if(use_post_processing)  execute_post_processings(problem, i * dt, dt);
+    mfem::out << "Solving: from " << i*dt << " to " << (i+1)*dt << '\n';
+    run_solve(ctx, problem, i * dt, dt);
+    if(use_post_processing)  execute_post_processings(ctx, problem, i * dt, dt);
     problem.update();
   }
 
   // print and write timetable
-  print_memory_footprint("After Solving:");
-  mfem_mgis::Profiler::timers::print_and_write_timers();
+  print_memory_footprint(ctx, "After Solving:");
+  mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
   return(EXIT_SUCCESS);
 }

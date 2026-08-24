@@ -24,7 +24,9 @@
 #define PRINT_DEBUG (std::cout <<  __FILE__ << ":" <<  __LINE__ << std::endl)
 
 int main(int argc, char** argv) {
-	
+  
+	auto ctx = mgis::Context{};
+  //ctx.enableProfiling(true);
   mfem_mgis::initialize(argc, argv);
   bool parallel = true;
   constexpr const auto dim = mfem_mgis::size_type{3};
@@ -63,7 +65,7 @@ int main(int argc, char** argv) {
 
   // loading the mesh
   {
-  mfem_mgis::NonLinearEvolutionProblem problem(
+  mfem_mgis::NonLinearEvolutionProblem problem(ctx,
       {{"MeshFileName", mesh_file},
        {"FiniteElementFamily", "H1"},
        {"FiniteElementOrder", order},
@@ -168,7 +170,7 @@ int main(int argc, char** argv) {
   auto iteration = mfem_mgis::size_type{};
   for (mfem_mgis::size_type i = 0; i != nsteps; ++i) {
 		using namespace mfem_mgis;
-		CatchTimeSection("time_loop");		
+		CatchTimeSection(ctx, "time_loop");		
     std::cout << "iteration " << iteration << " from " << t << " to " << t + dt
               << '\n';
     // resolution
@@ -198,12 +200,12 @@ int main(int argc, char** argv) {
         }
       }
     }
-    problem.executePostProcessings(t, dt);
+    problem.executePostProcessings(ctx, t, dt);
     t += dt;
     ++iteration;
     std::cout << '\n';
   }
   }
-  mfem_mgis::Profiler::timers::print_and_write_timers();
+  //mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
   return EXIT_SUCCESS;
 }
