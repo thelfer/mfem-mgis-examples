@@ -166,13 +166,15 @@ void print_memory_footprint(mgis::Context& ctx, std::string msg)
 
 
   template<typename Problem>
-void add_post_processings(Problem& p, std::string msg)
+void add_post_processings(mgis::Context& ctx, Problem& p, std::string msg)
 {
   p.addPostProcessing(
+      ctx,
       "ParaviewExportResults",
       {{"OutputFileName", msg}}
       );
   p.addPostProcessing(
+      ctx,
       "MeanThermodynamicForces",
       {{"OutputFileName", "avgStress"}});
 } // end timer add_postprocessing_and_outputs
@@ -263,7 +265,7 @@ static void setLinearSolver(mgis::Context& ctx, Problem& p,
   auto preconditionner = mfem_mgis::Parameters{{"Name","HypreBoomerAMG"}, {"Options",options}};
   solverParameters.insert(mfem_mgis::Parameters{{"Preconditioner",preconditionner}});
   // solver HypreGMRES
-  p.setLinearSolver("HypreGMRES", solverParameters);
+  p.setLinearSolver(ctx, "HypreGMRES", solverParameters);
 }
 
   template<typename Problem>
@@ -271,10 +273,10 @@ void run_solve(mgis::Context& ctx, Problem& p, double start, double dt)
 {
   CatchTimeSection(ctx, "Solve");
   // solving the problem
-  auto statistics = p.solve(start, dt);
+  auto statistics = p.solve(ctx, start, dt);
   // check status
   if (!statistics.status) {
-    mfem::out() << "INFO: FAILED\n";
+    mfem::out << "INFO: FAILED\n";
     std::exit(EXIT_FAILURE);
   }
 }
@@ -326,7 +328,9 @@ int main(int argc, char* argv[])
       {"MaximumNumberOfIterations", 6}});
 
   // add post processings
-  if(use_post_processing) add_post_processings(problem, "OutputFile-mixed-oxide-fuels");
+  if(use_post_processing) {
+    add_post_processings(ctx, problem, "OutputFile-mixed-oxide-fuels");
+  }
 
   // main function here
   int nStep=40;
