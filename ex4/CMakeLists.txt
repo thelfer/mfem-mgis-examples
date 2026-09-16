@@ -31,6 +31,7 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 # Copy needed file for execution
 file(COPY
   ${PROJECT_SOURCE_DIR}/Plasticity.mfront
+  ${PROJECT_SOURCE_DIR}/FiniteStrainPlasticity.mfront
   ${PROJECT_SOURCE_DIR}/ssna303_3d.msh
   ${PROJECT_SOURCE_DIR}/rc_ex10p
   DESTINATION ${PROJECT_BINARY_DIR})
@@ -38,8 +39,9 @@ file(COPY
 # Use mfront to generate libBehaviour.so
 add_custom_command(
   OUTPUT "src/libBehaviour.so"
-  COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/Plasticity.mfront
+  COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/Plasticity.mfront ${PROJECT_BINARY_DIR}/FiniteStrainPlasticity.mfront
   DEPENDS ${PROJECT_BINARY_DIR}/Plasticity.mfront
+  DEPENDS ${PROJECT_BINARY_DIR}/FiniteStrainPlasticity.mfront
   COMMENT "Performing mfront code generation")
 
 add_custom_target(generate-libBehaviour-ex4 ALL
