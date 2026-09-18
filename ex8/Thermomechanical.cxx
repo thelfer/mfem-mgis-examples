@@ -181,8 +181,8 @@ int main(int argc, char* argv[]) {
   setLinearSolver(ctx, mechanics, "mechanics", p, p.verbosity_level);
 
   if (p.post_processing == 1) {
-    add_post_processings(mechanics, "Results/Mechanics");
-    add_post_processings(heat_transfer, "Results/Thermal");
+    add_post_processings(mechanics, "Results/Mechanics", "Displacement");
+    add_post_processings(heat_transfer, "Results/Thermal", "Temperature");
 
     // // Exportation du swelling + déformation plastique
     // mfem_mgis::Parameters params_plast = {
