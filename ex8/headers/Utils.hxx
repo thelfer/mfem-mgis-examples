@@ -68,10 +68,12 @@ inline void print_mesh_information(Implementation& impl) {
 }
 
 template <typename Problem>
-inline void add_post_processings(Problem& p, std::string msg) {
+inline void add_post_processings(Problem& p,
+                                 std::string msg,
+                                 std::string field_name) {
   p.addPostProcessing(
       "ParaviewExportResults",
-      {{"OutputDirectory", "Resultats"}, {"OutputFileName", msg}});
+      {{"OutputFileName", msg}, {"OutputFieldName", field_name}});
 }
 
 template <typename Problem>
@@ -140,6 +142,10 @@ inline static void setLinearSolver(mgis::Context& ctx,
     }
 
     p.setLinearSolver(solver, solverParameters);
+  }
+
+  else if (contains(direct_solvers, solver)) {
+    p.setLinearSolver(solver, mfem_mgis::Parameters{});
   }
 
   else {
