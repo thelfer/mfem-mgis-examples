@@ -118,9 +118,11 @@ int main(int argc, char** argv) {
             const auto& bi =
                 problem.getBehaviourIntegrator(ctx, mid, 0) | or_die;
             const auto& m = bi.getMaterial(ctx) | or_die;
-            f = mfem_mgis::getInternalStateVariable(
-                    ctx, m, "EquivalentPlasticStrain",
-                    mfem_mgis::Material::END_OF_TIME_STEP) |
+            assign_values(ctx, f,
+                          mfem_mgis::getInternalStateVariable(
+                              ctx, m, "EquivalentPlasticStrain",
+                              mfem_mgis::Material::END_OF_TIME_STEP) |
+                              or_die) |
                 or_die;
             return true;
           },
@@ -166,7 +168,7 @@ int main(int argc, char** argv) {
                "vonMisesStressOutput-2")) |
       or_die;
   // running the simulation
-  const auto times = mfem_mgis::Simulation::TimesDescription{0, 1, 10};
+  const auto times = mfem_mgis::Simulation::TimesDescription{0, 1, 30};
   auto s = mfem_mgis::Simulation{ctx, problem, times};
   auto [status, ooutput] = s.run(ctx);
   success = status.shallContinue();

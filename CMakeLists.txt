@@ -36,8 +36,6 @@ add_subdirectory(ex7)
 add_subdirectory(ex8)
 add_subdirectory(ex9)
 
-
-
 #include(FetchContent)
 #FetchContent_Declare(mfem-mgis
 #  GIT_REPOSITORY https://github.com/thelfer/mfem-mgis.git
