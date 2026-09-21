@@ -112,7 +112,7 @@ mpirun -np 1 ./Thermomechanical \
 
 This configuration is also registered as the `Thermomechanical_MUMPS` CTest test.
 
-Resulting mechanical displacement field (`u Magnitude`) obtained with this test case, visualized with ParaView:
+Resulting mechanical displacement field (`Displacement Magnitude`) obtained with this test case, visualized with ParaView:
 
 ```bash
 paraview Results/Mechanics/Mechanics.pvd
