@@ -37,27 +37,29 @@ namespace mfem_mgis {
 
     /*!
      * \brief Assemble the element vector (residual)
-     * \param[in] e: finite element
-     * \param[in] tr: element transformation
+     * \param[in] e: finite element adjacent to the boundary face
+     * \param[in] tr: face transformation
      * \param[in] T_el: element temperatures
      * \param[out] R: assembled residual vector
      */
-    void AssembleElementVector(const mfem::FiniteElement& e,
-                               mfem::ElementTransformation& tr,
-                               const mfem::Vector& T_el,
-                               mfem::Vector& R) override;
+    void AssembleFaceVector(const mfem::FiniteElement& e,
+                            const mfem::FiniteElement&,
+                            mfem::FaceElementTransformations& tr,
+                            const mfem::Vector& T_el,
+                            mfem::Vector& R) override;
 
     /*!
      * \brief Assemble the element gradient (Jacobian)
-     * \param[in] e: finite element
-     * \param[in] tr: element transformation
+     * \param[in] e: finite element adjacent to the boundary face
+     * \param[in] tr: face transformation
      * \param[in] elfun: element function values
      * \param[out] K: assembled local Jacobian matrix
      */
-    void AssembleElementGrad(const mfem::FiniteElement& e,
-                             mfem::ElementTransformation& tr,
-                             const mfem::Vector& elfun,
-                             mfem::DenseMatrix& K) override;
+    void AssembleFaceGrad(const mfem::FiniteElement& e,
+                          const mfem::FiniteElement&,
+                          mfem::FaceElementTransformations& tr,
+                          const mfem::Vector& elfun,
+                          mfem::DenseMatrix& K) override;
   };  // end of struct RobinNonlinearFormIntegrator
 
   /*!

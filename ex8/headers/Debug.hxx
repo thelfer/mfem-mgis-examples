@@ -29,9 +29,20 @@ inline void debug_print_physics_stats(
     double local_max = -std::numeric_limits<double>::max();
     double local_sum = 0.0;
     double local_sum_sq = 0.0;
-    long long local_count = ndofs;
+    long long local_count = 0;
+#ifdef MFEM_USE_MPI
+    const auto* pfes = dynamic_cast<const mfem::ParFiniteElementSpace*>(fes);
+#endif
 
     for (int i = 0; i < ndofs; ++i) {
+#ifdef MFEM_USE_MPI
+      // a dof shared between ranks is counted by its owner only
+      if ((pfes != nullptr) &&
+          (pfes->GetLocalTDofNumber(fes->DofToVDof(i, 0)) < 0)) {
+        continue;
+      }
+#endif
+      ++local_count;
       double val = 0.0;
       if (is_vector) {
         double mag_sq = 0.0;
@@ -57,7 +68,7 @@ inline void debug_print_physics_stats(
 #ifdef MFEM_USE_MPI
     if (parallel) {
       MPI_Comm comm = MPI_COMM_WORLD;
-      if (auto pfes = dynamic_cast<const mfem::ParFiniteElementSpace*>(fes)) {
+      if (pfes != nullptr) {
         comm = pfes->GetComm();
       }
 

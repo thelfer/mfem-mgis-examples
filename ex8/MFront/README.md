@@ -12,7 +12,7 @@ the deformation.
 ### Mechanical Behavior: Plasticity with Hardening (`_IsotropicLinearHardeningPlasticity`)
 This behavior implements Von Mises plasticity with linear isotropic hardening. It is formulated in large strains using the **Hencky** strain measure.
 
-* **Thermal Expansion:** The thermal expansion coefficient is set to $15 \times 10^{-6}\text{ K}^{-1}$ with a reference temperature of $293.15\text{ K}$.
+* **Thermal Expansion:** The thermal expansion coefficient is set to $25 \times 10^{-6}\text{ K}^{-1}$ with a reference temperature of $293.15\text{ K}$.
 * **Exported Variables (Post-processing):** The temperature, yield strength ($\sigma_0$), and hardening modulus ($H$) are exported as auxiliary state variables to facilitate visualization (e.g., in ParaView).
 
 ### Material Laws (ALFENI)
@@ -50,8 +50,9 @@ This point-wise model computes the evolution of the solid volumetric swelling $S
 ### Mechanical Behavior: Irradiation Creep (`_NortonPRQ`)
 Unlike ALFENI, U3Si2 does not undergo classical plasticity but instead creeps under irradiation (modified Norton-type law). This model also uses the **Hencky** strain measure for large deformations.
 
+* **Thermal Expansion:** The thermal expansion coefficient is set to $16.1 \times 10^{-6}\text{ K}^{-1}$ (IAEA-TECDOC-1921, section 2.2.4) with a reference temperature of $293.15\text{ K}$.
 * **Coupling with Swelling:** The swelling $sw$ computed by the `_SolidSwelling` model is passed to this mechanical law as an external state variable. It is converted into an isotropic inelastic strain tensor.
 * **Flow Rule (Creep):** 
-  * Driven by the fission rate ($fr = Pow / E_f$), where $E_f = 3.204 \times 10^{-11}\text{ J/fission}$.
+  * Driven by the fission rate ($fr = Pow / E_f$), where $E_f = 3.20436 \times 10^{-11}\text{ J/fission}$.
   * Creep is proportional to the Von Mises equivalent stress ($seq$) multiplied by the fission rate and a constant $A = 500 \times 10^{-37}$.
 * **Post-processing:** The scalar swelling is assigned to an auxiliary variable (`SwellingExport` of type `strain`) to force its export to visualization tools.

@@ -4,7 +4,7 @@ This directory contains all the tools, scripts (Bash, Python), and data used to 
 
 ## Directory Structure
 
-The directory is divided into three thematic subdirectories:
+The directory is divided into two thematic subdirectories:
 
 ### HPC_scaling
 
@@ -17,12 +17,6 @@ Dedicated to analyzing code performance and scalability on a supercomputer.
 Dedicated to profiling and optimizing linear algebra operations.
 
 - **Contents:** Log extraction scripts (e.g., `aggregation_SvPc_mech.sh`), result CSV files, and Python scripts for comparing the impact of different solver/preconditioner combinations (HyprePCG, MUMPS, etc.).
-
-### Physics_postprocessing
-
-Dedicated to the physical and thermomechanical analysis of the simulation results.
-
-- **Contents:** Processing of physical fields (temperature, strain), extraction of MFront state variables (U3Si2 swelling, ALFENI plasticity), and generation of time-evolution plots.
 
 ## Prerequisites
 

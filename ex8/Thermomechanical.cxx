@@ -1,3 +1,4 @@
+#include <cmath>
 #include <cstdlib>
 #include <functional>
 #include <iostream>
@@ -81,9 +82,14 @@ void common_parameters(mfem::OptionsParser& args, TestParameters& p) {
                  "Total simulation duration, default = 1e5");
   args.AddOption(&p.nbsteps, "-ns", "--nbsteps",
                  "Number of time steps, default = 1");
+  args.AddOption(&p.t_ramp, "-tr", "--t-ramp",
+                 "Duration of the power ramp (0 disables it), default = 1e5");
   args.AddOption(&p.h_conv, "-hc", "--h-conv",
                  "Thermal convection coefficient, default = 5e4");
+  args.AddOption(&p.water_pressure, "-wp", "--water-pressure",
+                 "Coolant pressure, default = 1e6");
 
+  mfem_mgis::declareDefaultOptions(args);
   args.Parse();
 
   if (!args.Good()) {
@@ -92,7 +98,6 @@ void common_parameters(mfem::OptionsParser& args, TestParameters& p) {
     exit(0);
   }
   if (mfem_mgis::getMPIrank() == 0) args.PrintOptions(std::cout);
-  mfem_mgis::declareDefaultOptions(args);
 }
 
 int main(int argc, char* argv[]) {
@@ -109,9 +114,22 @@ int main(int argc, char* argv[]) {
   OptionsParser args(argc, argv);
   common_parameters(args, p);
 
+  if (p.t_ramp < 0) {
+    ctx.log() << "the duration of the power ramp must not be negative\n";
+    finalize();
+    return EXIT_FAILURE;
+  }
+  const auto ramp_steps = p.t_ramp * p.nbsteps / p.duree;
+  if ((p.t_ramp < p.duree) &&
+      (std::abs(ramp_steps - std::round(ramp_steps)) > 1e-9)) {
+    ctx.log() << "the end of the power ramp (t = " << p.t_ramp
+              << " s) must be a time step boundary\n";
+    finalize();
+    return EXIT_FAILURE;
+  }
+
   auto power_history = [p](const double t) {
-    const double t_ramp = 1e5;
-    return (t <= t_ramp) ? p.source * (t / t_ramp) : p.source;
+    return (t < p.t_ramp) ? p.source * (t / p.t_ramp) : p.source;
   };
 
   auto mesh =
@@ -160,16 +178,13 @@ int main(int argc, char* argv[]) {
   print_mesh_information(mechanics.getImplementation<true>());
   print_memory_footprint("After_problem_creation:");
 
-  /*Test de récupération du déplacement pour l'envoyer à Robin*/
   auto mechanics_fed = mechanics.getFiniteElementDiscretizationPointer();
 #ifdef MFEM_USE_MPI
-  auto& mech_fes = mechanics_fed->getFiniteElementSpace<true>();
+  mfem::ParGridFunction u_mech(&mechanics_fed->getFiniteElementSpace<true>());
 #else
-  auto& mech_fes = mechanics_fed->getFiniteElementSpace<false>();
+  mfem::GridFunction u_mech(&mechanics_fed->getFiniteElementSpace<false>());
 #endif
-  double* u_data = mechanics.getUnknowns(mfem_mgis::ets).GetData();
-  mfem::GridFunction u_mech(&mech_fes, u_data);
-  /*Fin de test*/
+  u_mech = 0.0;
 
   const auto setup =
       setup_properties(ctx, p, heat_transfer, mechanics, power_history);
@@ -208,15 +223,15 @@ int main(int argc, char* argv[]) {
   auto c = std::make_shared<IterativeCouplingScheme>(ctx, mesh) | or_die;
   auto criterion = std::make_shared<FirstIterationConvergenceCriterion>();
 
-  c->setMaximumNumberOfIterations(ctx, 10);
-  c->addConvergenceCriterion(ctx, criterion);
+  c->setMaximumNumberOfIterations(ctx, 10) | or_die;
+  c->addConvergenceCriterion(ctx, criterion) | or_die;
 
   auto updater_model = std::make_shared<FieldUpdaterModel>(
       ctx, mesh, setup.fields[0].Pow_s0_sw, setup.fields[0].Pow_s1_sw,
-      power_history);
+      power_history, &u_mech, &mechanics.getUnknowns(mfem_mgis::ets));
 
-  c->addModel(ctx, heat_transfer_model) | or_die;
   c->addModel(ctx, updater_model) | or_die;
+  c->addModel(ctx, heat_transfer_model) | or_die;
   c->addModel(ctx, setup.swelling_model) | or_die;
   c->addModel(ctx, mechanics_model) | or_die;
   ps.setCouplingScheme(ctx, c) | or_die;
